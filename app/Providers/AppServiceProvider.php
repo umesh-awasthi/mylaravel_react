@@ -2,26 +2,36 @@
 
 namespace App\Providers;
 
-use Illuminate\Support\Facades\Vite;
 use Illuminate\Support\ServiceProvider;
 use App\Repositories\AdminRepository;
+use App\Repositories\PropertyRepository;
+use App\Repositories\RoleRepository;
+use App\Repositories\PermissionRepository;
 
 class AppServiceProvider extends ServiceProvider
 {
+    public function register()
+    {
+        // Bind repositories to the service container
+        $this->app->bind('App\Repositories\AdminRepository', function ($app) {
+            return new AdminRepository();
+        });
 
-    /**
-     * Register any application services.
-     */
-    public function register(): void
-    { 
-        
+        $this->app->bind('App\Repositories\PropertyRepository', function ($app) {
+            return new PropertyRepository();
+        });
+
+        $this->app->bind('App\Repositories\RoleRepository', function ($app) {
+            return new RoleRepository();
+        });
+
+        $this->app->bind('App\Repositories\PermissionRepository', function ($app) {
+            return new PermissionRepository();
+        });
     }
 
-    /**
-     * Bootstrap any application services.
-     */
-    public function boot(): void
+    public function boot()
     {
-        Vite::prefetch(concurrency: 3);
+        //
     }
 }
