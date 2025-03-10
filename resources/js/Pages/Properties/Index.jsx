@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { Inertia } from '@inertiajs/inertia';
 import { Link } from '@inertiajs/react';
 
-const Index = ({ properties }) => {
+const Index = ({ properties, rolePermissions }) => {
+    console.log(rolePermissions);
     const [expanded, setExpanded] = useState({});
 
     const toggleDescription = (id) => {
@@ -21,11 +22,13 @@ const Index = ({ properties }) => {
                         className="mt-4 inline-block bg-green-600 text-white font-bold py-2 px-4 rounded hover:bg-green-700">
                         Go to Dashboard
                     </Link>
-                    <Link 
-                        href="/properties/create" 
-                        className="mt-4 inline-block bg-blue-600 text-white font-bold py-2 px-4 rounded hover:bg-blue-700">
-                        Add Property
-                    </Link>
+                    {rolePermissions.includes('propertie_create') && (
+                        <Link 
+                            href="/properties/create" 
+                            className="mt-4 inline-block bg-blue-600 text-white font-bold py-2 px-4 rounded hover:bg-blue-700">
+                            Add Property
+                        </Link>
+                    )}
             </div>
             <table className="min-w-full divide-y divide-gray-200 mt-4">
                 <thead>
@@ -72,15 +75,19 @@ const Index = ({ properties }) => {
 
                             {/* Action Buttons */}
                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                <Link href={`/properties/${property.id}/edit`} 
-                                    className="bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-600 mr-2">
-                                    Edit
-                                </Link>
-                                <button 
-                                    onClick={() => handleDelete(property.id)} 
-                                    className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600">
-                                    Delete
-                                </button>
+                                {rolePermissions.includes('propertie_edit') && (
+                                    <Link href={`/properties/${property.id}/edit`} 
+                                        className="bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-600 mr-2">
+                                        Edit
+                                    </Link>
+                                )}
+                                {rolePermissions.includes('propertie_delete') && (
+                                    <button 
+                                        onClick={() => handleDelete(property.id)} 
+                                        className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600">
+                                        Delete
+                                    </button>
+                                )}
                             </td>
                         </tr>
                     ))}

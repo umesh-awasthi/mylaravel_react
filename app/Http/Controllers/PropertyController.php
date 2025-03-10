@@ -5,17 +5,21 @@ namespace App\Http\Controllers;
 use App\Http\Requests\PropertyRequest; // Assuming you will create a request for validation
 use App\Repositories\AdminRepository; // Add this import at the top
 use App\Repositories\PropertyRepository;
+use App\Repositories\RoleRepository;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class PropertyController extends Controller
 {
     protected $propertyRepository;
+    protected $roleRepository;
 
     protected $adminRepository; // Add this line
 
-    public function __construct(PropertyRepository $propertyRepository, AdminRepository $adminRepository) // Modify the constructor
+    public function __construct(PropertyRepository $propertyRepository, AdminRepository $adminRepository
+    ,RoleRepository $roleRepository) // Modify the constructor
     {
+        $this->roleRepository = $roleRepository;
         $this->propertyRepository = $propertyRepository;
         $this->adminRepository = $adminRepository; // Initialize the adminRepository
     }
@@ -30,7 +34,18 @@ class PropertyController extends Controller
         $properties = $properties->filter(function ($property) {
             return $this->adminRepository->canManageProperty($property);
         });
-        return Inertia::render('Properties/Index', compact('properties'));
+
+        // Get the current user's role and permissions
+        $user = auth()->user();
+      
+        $role = $this->roleRepository->findRoleById($user->role_id);
+        $rolePermissions = $this->roleRepository->getRolePermissions($role);
+        \Log::info('User:', ['user' => $user, 'roles' => $user->role_id, 'permissions' => $rolePermissions]);
+        // dd($rolePermissions);
+        return Inertia::render('Properties/Index', [
+            'properties' => $properties,
+            'rolePermissions' => $rolePermissions // Pass permissions to the view
+        ]);
     }
 
     /**

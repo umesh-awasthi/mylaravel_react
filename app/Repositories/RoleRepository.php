@@ -30,7 +30,7 @@ public function getAllRoles()
 
     public function getRolePermissions(Role $role)
     {
-        return $role->permissions->pluck('id')->toArray();
+        return $role->permissions->pluck('name')->toArray();
     }
 
     public function syncPermissions(Role $role, array $permissionIds)
@@ -47,7 +47,7 @@ public function getAllRoles()
             'role' => $role,
             'permissions' => $allPermissions->map(function ($permission) use ($role) {
                 return [
-                    'id' => $permission->id,
+                    'name' => $permission->id,
                     'name' => $permission->name,
                     'parent_id' => $permission->parent_id, // Handles parent-child structure
                     'assigned' => $role->permissions->contains($permission->id)

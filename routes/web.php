@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
@@ -22,19 +23,23 @@ Route::get('/', function () {
 // })->middleware(['auth', 'verified'])->name('dashboard');
 
 
-Route::get('/dashboard', function () {
-    return Inertia::render('Dashboard', [
-        'auth' => [
-            'user' => [
-                'id' => auth()->user()->id,
-                'name' => auth()->user()->name,
-                'role' => auth()->user()->role->name, // Role Name
-                'role_id' => auth()->user()->role_id, // Role ID
-                'permissions' => auth()->user()->role->permissions->pluck('name')->toArray(), // Assigned Permissions
-            ]
-        ]
-    ]);
-})->name('dashboard');
+// Route::get('/dashboard', function () {
+//     return Inertia::render('Dashboard', [
+//         'auth' => [
+
+//             'user' => [
+//                 'id' => auth()->user()->id,
+//                 'name' => auth()->user()->name,
+//                 'role' => auth()->user()->role->name, // Role Name
+//                 'role_id' => auth()->user()->role_id, // Role ID
+//                 'permissions' => auth()->user()->role->permissions->pluck('name')->toArray(), // Assigned Permissions
+//             ]
+          
+//         ]
+//     ]);
+// })->name('dashboard');
+
+Route::get('/dashboard' ,[DashboardController::class , 'index'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

@@ -31,20 +31,18 @@ class AdminRepository
             'role_id' => $roleId, // Store role ID in 'users' table
         ]);
 
+        // Assign roles to the pivot table
+        if (!empty($roles)) {
+            $user->roles()->sync($roles);
+        }
 
-    // Assign roles to the pivot table
-    if (!empty($roles)) {
-        $user->roles()->sync($roles);
+        // Assign permissions if provided
+        if (!empty($permissions)) {
+            $user->permissions()->sync($permissions);
+        }
+
+        return $user;
     }
-
-    // Assign permissions if provided
-    if (!empty($permissions)) {
-        $user->permissions()->sync($permissions);
-    }
-
-    return $user;
-}
-
 
     public function assignRoles(User $user, array $roles): void
     {
@@ -66,9 +64,24 @@ class AdminRepository
 
         return null;
     }
+
     public function canManageProperty($property): bool
     {
         // Allow all admins to manage properties
         return true; 
     }
+
+    // public function getUserPermissions(User $user): array
+    // {
+    //     // Get the user's roles
+    //     $roles = $user->roles ?? []; // Ensure roles is an array
+
+    //     // Collect permissions from all roles
+    //     $permissions = [];
+    //     foreach ($roles as $role) { 
+    //         $permissions = array_merge($permissions, $role->permissions->pluck('name')->toArray());
+    //     }
+       
+    //     return array_unique($permissions); // Return unique permissions
+    // }
 }
