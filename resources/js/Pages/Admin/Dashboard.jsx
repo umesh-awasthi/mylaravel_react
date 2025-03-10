@@ -30,7 +30,7 @@ export default function Dashboard({ auth }) {
                             {/* <p className="text-sm text-gray-500">Role: {userRole}</p>
                             <p className="text-sm text-gray-500">Permissions: {JSON.stringify(userPermissions)}</p> */}
 
-                            <div className="space-y-4">
+                           
                                 {/* Admin Features */}
                                 {userRole === 'admin' && (
                                     <>
@@ -42,6 +42,12 @@ export default function Dashboard({ auth }) {
                                                         Create User
                                                     </Link>
                                                 )}
+
+                                                {hasPermission('user_list') && (
+                                                    <Link href="/admin/users" className="btn btn-primary">
+                                                     User List
+                                                    </Link>
+                                                  )}
                                             </div>
                                         )}
 
@@ -92,7 +98,7 @@ export default function Dashboard({ auth }) {
                             </div>
                         </div>
                     </div>
-                </div>
+                
             </div>
         </AuthenticatedLayout>
     );

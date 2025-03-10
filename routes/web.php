@@ -8,6 +8,7 @@ use Inertia\Inertia;
 use App\Http\Controllers\Auth\AdminAuthenticatedSessionController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\PermissionController;
+use App\Http\Controllers\PropertyController;
 
 Route::get('/', function () {
     return Inertia::render('Welcome', [
@@ -18,26 +19,7 @@ Route::get('/', function () {
     ]);
 });
 
-// Route::get('/dashboard', function () {
-//     return Inertia::render('Dashboard');
-// })->middleware(['auth', 'verified'])->name('dashboard');
 
-
-// Route::get('/dashboard', function () {
-//     return Inertia::render('Dashboard', [
-//         'auth' => [
-
-//             'user' => [
-//                 'id' => auth()->user()->id,
-//                 'name' => auth()->user()->name,
-//                 'role' => auth()->user()->role->name, // Role Name
-//                 'role_id' => auth()->user()->role_id, // Role ID
-//                 'permissions' => auth()->user()->role->permissions->pluck('name')->toArray(), // Assigned Permissions
-//             ]
-          
-//         ]
-//     ]);
-// })->name('dashboard');
 
 Route::get('/dashboard' ,[DashboardController::class , 'index'])->name('dashboard');
 
@@ -47,7 +29,7 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-use App\Http\Controllers\PropertyController;
+
 
 Route::middleware('auth')->group(function () {
     Route::resource('properties', PropertyController::class);
@@ -82,5 +64,9 @@ Route::prefix('admin')->group(function () {
     Route::get('/permissions/create', [PermissionController::class, 'create'])->name('admin.permissions.create');
     Route::post('/permissions', [PermissionController::class, 'store'])->name('admin.permissions.store');
 });
+
+
+Route::get('/admin/users', [AdminAuthenticatedSessionController::class, 'getAllUsers'])->name('admin.users');
+Route::delete('/admin/users/{id}', [AdminAuthenticatedSessionController::class, 'deleteUser'])->name('admin.users.delete');
 
 require __DIR__.'/auth.php';

@@ -71,17 +71,13 @@ class AdminRepository
         return true; 
     }
 
-    // public function getUserPermissions(User $user): array
-    // {
-    //     // Get the user's roles
-    //     $roles = $user->roles ?? []; // Ensure roles is an array
+    public function getAllUsers(): array
+    {
+        return User::all()->toArray(); // Fetch all users and convert to array
+    }
 
-    //     // Collect permissions from all roles
-    //     $permissions = [];
-    //     foreach ($roles as $role) { 
-    //         $permissions = array_merge($permissions, $role->permissions->pluck('name')->toArray());
-    //     }
-       
-    //     return array_unique($permissions); // Return unique permissions
-    // }
+    public function deleteUser(User $user): void
+    {
+        $user->delete(); // Delete the user
+    }
 }

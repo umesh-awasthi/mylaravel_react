@@ -162,7 +162,8 @@ export default function AuthenticatedLayout({ header, children }) {
                 </div>
             </nav>
 
-            {header && (
+            <meta name="csrf-token" content="{{ csrf_token() }}" />
+            {header && ( 
                 <header className="bg-white shadow">
                     <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
                         {header}

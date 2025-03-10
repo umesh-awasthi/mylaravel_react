@@ -11,6 +11,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
+use app\Models\User;
 
 class AdminAuthenticatedSessionController extends Controller
 {
@@ -25,6 +26,15 @@ class AdminAuthenticatedSessionController extends Controller
         $this->roleRepository = $roleRepository;
     }
 
+    public function getAllUsers(): Response
+    {
+        $users = $this->adminRepository->getAllUsers(); // Fetch all users
+        
+        return Inertia::render('Admin/UserList', [
+            'users' => $users,
+        ]);
+    }
+
     /**
      * Display the admin login view.
      */
@@ -33,6 +43,17 @@ class AdminAuthenticatedSessionController extends Controller
         return Inertia::render('Auth/AdminLogin', [
             'status' => session('status'),
         ]);
+    }
+    public function deleteUser($id, Request $request)
+    {
+        try {
+            $user = User::findOrFail($id);
+            $this->adminRepository->deleteUser($user);
+    
+            return response()->json(['success' => true, 'message' => 'User deleted successfully']);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
     }
 
     /**
