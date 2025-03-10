@@ -69,7 +69,7 @@ class RoleController extends Controller
             'permissions' => 'array',
             'permissions.*' => 'exists:permissions,id',
         ]);
-
+       
         $role = $this->roleRepository->findRoleById($roleId);
         $this->roleRepository->syncPermissions($role, $validated['permissions'] ?? []);
 
