@@ -7,7 +7,13 @@ use App\Models\Permission;
 
 class RoleRepository
 {
-    public function getAllRoles()
+public function findRoleByName($roleName)
+{
+    return Role::where('name', $roleName)->first();
+}
+
+public function getAllRoles()
+
     {
         return Role::all();
     }

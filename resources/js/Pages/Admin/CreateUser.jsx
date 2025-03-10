@@ -2,12 +2,12 @@ import React, { useState } from 'react';
 import { Head, useForm } from '@inertiajs/react';
 import AuthenticatedLayout from '../../Layouts/AuthenticatedLayout';
 
-export default function CreateUser() {
+export default function CreateUser({ roles }) { // Receive roles as a prop
     const { data, setData, post, processing, errors } = useForm({
         name: '',
         email: '',
         password: '',
-        role: '',
+        role_id: '',
     });
 
     const handleSubmit = (e) => {
@@ -57,14 +57,21 @@ export default function CreateUser() {
                         </div>
                         <div>
                             <label htmlFor="role" className="block text-sm font-medium text-gray-700">Role</label>
-                            <input
-                                type="text"
+                            <select
                                 id="role"
-                                value={data.role}
-                                onChange={(e) => setData('role', e.target.value)}
+                                value={data.role_id}
+                                onChange={(e) => setData('role_id', e.target.value)}
                                 className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                            />
-                            {errors.role && <div className="text-red-600">{errors.role}</div>}
+                                required
+                            >
+                                <option value="">Select a role</option>
+                                {roles.map((role) => (
+                                    <option key={role.id} value={role.id}>
+                                        {role.name}
+                                    </option>
+                                ))}
+                            </select>
+                            {errors.role_id && <div className="text-red-600">{errors.role_id}</div>}
                         </div>
                         <div>
                             <button type="submit" disabled={processing} className="btn btn-primary">

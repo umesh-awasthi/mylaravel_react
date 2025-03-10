@@ -5,26 +5,32 @@ namespace App\Repositories;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 
+use App\Repositories\RoleRepository;
+
 class AdminRepository
 {
-    public function canManageProperty($property): bool
+    protected $roleRepository;
+
+    public function __construct(RoleRepository $roleRepository)
     {
-        // Allow all admins to manage properties
-        return true; 
+        $this->roleRepository = $roleRepository;
     }
 
     public function createUser(array $data, array $roles = [], array $permissions = []): User
-{
-    // Determine the primary role for storage in the 'role' column
-    $primaryRole = count($roles) > 0 ? $roles[0] : 'user'; // Default to 'user' if no role is assigned
+    {
+        // Determine the primary role for storage in the 'role' column
+        $primaryRole = count($roles) > 0 ? $roles[0] : 'user'; // Default to 'user' if no role is assigned
+        $role = $this->roleRepository->findRoleByName($primaryRole);
+        $roleId = $role ? $role->id : null; // Get the role ID or null if not found
 
-    // Create the user with the role
-    $user = User::create([
-        'name' => $data['name'],
-        'email' => $data['email'],
-        'password' => Hash::make($data['password']),
-        'role' => $primaryRole, // Store role in 'users' table
-    ]);
+        // Create the user with the role
+        $user = User::create([
+            'name' => $data['name'],
+            'email' => $data['email'],
+            'password' => Hash::make($data['password']),
+            'role_id' => $roleId, // Store role ID in 'users' table
+        ]);
+
 
     // Assign roles to the pivot table
     if (!empty($roles)) {
@@ -59,5 +65,10 @@ class AdminRepository
         }
 
         return null;
+    }
+    public function canManageProperty($property): bool
+    {
+        // Allow all admins to manage properties
+        return true; 
     }
 }

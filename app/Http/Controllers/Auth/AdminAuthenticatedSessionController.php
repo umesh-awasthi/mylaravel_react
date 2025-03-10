@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Repositories\AdminRepository;
 use App\Repositories\PermissionRepository;
+use App\Repositories\RoleRepository;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -15,11 +16,13 @@ class AdminAuthenticatedSessionController extends Controller
 {
     protected $adminRepository;
     protected $permissionRepository;
+    protected $roleRepository;
 
-    public function __construct(AdminRepository $adminRepository, PermissionRepository $permissionRepository)
+    public function __construct(AdminRepository $adminRepository, PermissionRepository $permissionRepository , RoleRepository $roleRepository)
     {
         $this->adminRepository = $adminRepository;
         $this->permissionRepository = $permissionRepository;
+        $this->roleRepository = $roleRepository;
     }
 
     /**
@@ -72,9 +75,13 @@ class AdminAuthenticatedSessionController extends Controller
      * Show the create user form.
      */
     public function showCreateUserForm(): Response
-    {
-        return Inertia::render('Admin/CreateUser');
-    }
+{
+    $roles = $this->roleRepository->getAllRoles(); // Fetch all roles using repository
+
+    return Inertia::render('Admin/CreateUser', [
+        'roles' => $roles, // Pass roles to the Inertia component
+    ]);
+}
 
     /**
      * Handle user creation request.
@@ -85,15 +92,15 @@ class AdminAuthenticatedSessionController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8',
-            'roles' => 'nullable|array',
-            'permissions' => 'nullable|array',
+            'role_id' => 'required|exists:roles,id',
         ]);
 
-        $this->adminRepository->createUser(
-            $validated,
-            $request->input('roles', []),
-            $request->input('permissions', [])
-        );
+        // Create user without role
+        $user = $this->adminRepository->createUser($validated);
+        
+        // Assign role using role_id
+        $user->role_id = $validated['role_id'];
+        $user->save();
 
         return redirect()->route('dashboard')
             ->with('status', 'User created successfully.');

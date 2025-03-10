@@ -13,9 +13,10 @@ class AppServiceProvider extends ServiceProvider
     public function register()
     {
         // Bind repositories to the service container
-        $this->app->bind('App\Repositories\AdminRepository', function ($app) {
-            return new AdminRepository();
-        });
+$this->app->bind('App\Repositories\AdminRepository', function ($app) {
+    return new AdminRepository($app->make(RoleRepository::class));
+});
+
 
         $this->app->bind('App\Repositories\PropertyRepository', function ($app) {
             return new PropertyRepository();

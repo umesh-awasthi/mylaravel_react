@@ -3,60 +3,64 @@ import { Head, Link, useForm } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
 
 export default function AssignPermissions({ role, permissions }) {
-    // Group permissions by parent
+    // Group permissions by common prefix (parent-child hierarchy)
     const groupedPermissions = permissions.reduce((acc, permission) => {
-        if (!permission.parent_id) {
-            acc[permission.id] = { ...permission, children: [] };
-        } else {
-            acc[permission.parent_id]?.children.push(permission);
+        const [parentPrefix] = permission.name.split('.'); // Extract prefix (parent)
+        
+        if (!acc[parentPrefix]) {
+            acc[parentPrefix] = { 
+                name: parentPrefix, 
+                children: [] 
+            };
         }
+        
+        acc[parentPrefix].children.push(permission);
         return acc;
     }, {});
 
-    // Initial state with preselected permissions
+    // Initialize form with preselected permissions
     const { data, setData, post, processing } = useForm({
         permissions: role.permissions.map(p => p.id),
     });
 
-    // Handle Parent Checkbox Change
-    const handleParentChange = (parentId, isChecked) => {
+    // Handle Parent Checkbox Change (select/unselect all children)
+    const handleParentChange = (parentPrefix, isChecked) => {
         let updatedPermissions = [...data.permissions];
+        const childrenIds = groupedPermissions[parentPrefix].children.map(c => c.id);
 
         if (isChecked) {
-            updatedPermissions = [
-                ...new Set([...updatedPermissions, parentId, ...groupedPermissions[parentId].children.map(c => c.id)])
-            ];
+            updatedPermissions = [...new Set([...updatedPermissions, ...childrenIds])];
         } else {
-            updatedPermissions = updatedPermissions.filter(id => id !== parentId && !groupedPermissions[parentId].children.some(c => c.id === id));
+            updatedPermissions = updatedPermissions.filter(id => !childrenIds.includes(id));
         }
 
         setData('permissions', updatedPermissions);
         updatePermissions(updatedPermissions);
     };
 
-    // Handle Child Checkbox Change
-    const handleChildChange = (childId, parentId, isChecked) => {
+    // Handle Child Checkbox Change (individual selection)
+    const handleChildChange = (childId, parentPrefix, isChecked) => {
         let updatedPermissions = [...data.permissions];
 
         if (isChecked) {
             updatedPermissions.push(childId);
-            if (groupedPermissions[parentId].children.every(c => updatedPermissions.includes(c.id))) {
-                updatedPermissions.push(parentId); // Check parent if all children are checked
-            }
         } else {
             updatedPermissions = updatedPermissions.filter(id => id !== childId);
-            if (updatedPermissions.includes(parentId)) {
-                updatedPermissions = updatedPermissions.filter(id => id !== parentId); // Uncheck parent if any child is unchecked
-            }
+        }
+
+        // Check if all children are selected, then check the parent automatically
+        const allChildrenSelected = groupedPermissions[parentPrefix].children.every(c => updatedPermissions.includes(c.id));
+        if (allChildrenSelected) {
+            updatedPermissions.push(...groupedPermissions[parentPrefix].children.map(c => c.id));
         }
 
         setData('permissions', updatedPermissions);
         updatePermissions(updatedPermissions);
     };
 
-    // Determine Parent Checkbox State
-    const getParentState = (parentId) => {
-        const childIds = groupedPermissions[parentId].children.map(c => c.id);
+    // Determine Parent Checkbox State (checked, unchecked, or indeterminate)
+    const getParentState = (parentPrefix) => {
+        const childIds = groupedPermissions[parentPrefix].children.map(c => c.id);
         const checkedChildren = childIds.filter(id => data.permissions.includes(id));
 
         if (checkedChildren.length === 0) return false; // No children selected
@@ -66,9 +70,13 @@ export default function AssignPermissions({ role, permissions }) {
 
     // Update Permissions in Database via AJAX
     const updatePermissions = (permissions) => {
-        post(route('admin.roles.assign-permissions.update', role.id), {
-            permissions,
-        }, { preserveScroll: true });
+        post(route('admin.roles.assign-permissions.update', role.id), { permissions }, { preserveScroll: true });
+    };
+
+    // Handle Assign Permissions (Final Save)
+    const handleAssignPermissions = () => {
+        updatePermissions(data.permissions);
+        alert('Permissions assigned successfully!');
     };
 
     return (
@@ -82,47 +90,52 @@ export default function AssignPermissions({ role, permissions }) {
                         </h1>
 
                         <div className="space-y-6">
-                            {Object.values(groupedPermissions).map(parent => (
-                                <div key={parent.id} className="border-b pb-4">
+                            {Object.entries(groupedPermissions).map(([parentPrefix, group]) => (
+                                <div key={parentPrefix} className="border-b pb-4">
                                     {/* Parent Checkbox */}
                                     <div className="flex items-center">
                                         <input
                                             type="checkbox"
-                                            id={`parent_${parent.id}`}
-                                            checked={getParentState(parent.id) === true}
-                                            ref={(el) => { if (el) el.indeterminate = getParentState(parent.id) === 'indeterminate'; }}
-                                            onChange={(e) => handleParentChange(parent.id, e.target.checked)}
+                                            id={`parent_${parentPrefix}`}
+                                            checked={getParentState(parentPrefix) === true}
+                                            ref={(el) => { if (el) el.indeterminate = getParentState(parentPrefix) === 'indeterminate'; }}
+                                            onChange={(e) => handleParentChange(parentPrefix, e.target.checked)}
                                             className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
                                         />
-                                        <label htmlFor={`parent_${parent.id}`} className="ml-3 font-semibold text-gray-800">
-                                            {parent.name}
+                                        <label htmlFor={`parent_${parentPrefix}`} className="ml-3 font-semibold text-gray-800">
+                                            {parentPrefix}
                                         </label>
                                     </div>
 
                                     {/* Child Checkboxes */}
-                                    {parent.children.length > 0 && (
-                                        <div className="pl-6 mt-2 space-y-2">
-                                            {parent.children.map(child => (
-                                                <div key={child.id} className="flex items-center">
-                                                    <input
-                                                        type="checkbox"
-                                                        id={`child_${child.id}`}
-                                                        checked={data.permissions.includes(child.id)}
-                                                        onChange={(e) => handleChildChange(child.id, parent.id, e.target.checked)}
-                                                        className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-                                                    />
-                                                    <label htmlFor={`child_${child.id}`} className="ml-3 text-sm text-gray-600">
-                                                        {child.name}
-                                                    </label>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
+                                    <div className="pl-6 mt-2 space-y-2">
+                                        {group.children.map(child => (
+                                            <div key={child.id} className="flex items-center">
+                                                <input
+                                                    type="checkbox"
+                                                    id={`child_${child.id}`}
+                                                    checked={data.permissions.includes(child.id)}
+                                                    onChange={(e) => handleChildChange(child.id, parentPrefix, e.target.checked)}
+                                                    className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                                                />
+                                                <label htmlFor={`child_${child.id}`} className="ml-3 text-sm text-gray-600">
+                                                    {child.name}
+                                                </label>
+                                            </div>
+                                        ))}
+                                    </div>
                                 </div>
                             ))}
                         </div>
-                        
+
                         <div className="flex items-center justify-end mt-6">
+                            <button 
+                                onClick={handleAssignPermissions} 
+                                className="bg-indigo-600 text-white px-4 py-2 rounded"
+                                disabled={processing}
+                            >
+                                Assign Permissions
+                            </button>
                             <Link href={route('admin.roles.index')} className="text-gray-600 hover:text-gray-900 mr-4">
                                 Cancel
                             </Link>

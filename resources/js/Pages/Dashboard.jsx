@@ -33,7 +33,7 @@ export default function Dashboard({ auth }) {
                             <p>Permissions: {JSON.stringify(auth?.user?.permissions)}</p> */}
 
                             <div className="space-y-4">
-                                {auth?.user?.role === 'admin' && (
+                                {auth?.user?.role_id === 2 && (
                                     <>
                                         <div>
                                             <h4 className="font-medium mb-2">User Management</h4>
@@ -71,7 +71,7 @@ export default function Dashboard({ auth }) {
                                     </>
                                 )}
 
-                                {(auth?.user?.role === 'admin' || auth?.user?.permissions?.includes('view_properties')) && (
+                                {(auth?.user?.role_id === 2 || auth?.user?.permissions?.includes('view_properties')) && (
                                     <div>
                                         <h4 className="font-medium mb-2">Property Management</h4>
                                         <Link href="/properties" className="btn btn-primary mr-2">

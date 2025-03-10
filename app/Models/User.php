@@ -21,7 +21,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
-        'role', // Add role to fillable attributes
+        'role_id',
     ];
 
     /**
@@ -34,11 +34,8 @@ class User extends Authenticatable
         'remember_token',
     ];
 
-    // Add a role attribute casting
-    protected function role(): Attribute
+    public function role()
     {
-        return Attribute::make(
-            get: fn ($value) => $value ?? 'user', // Default to 'user' if not set
-        );
+        return $this->belongsTo(Role::class);
     }
 }
