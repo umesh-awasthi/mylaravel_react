@@ -17,9 +17,24 @@ Route::get('/', function () {
     ]);
 });
 
+// Route::get('/dashboard', function () {
+//     return Inertia::render('Dashboard');
+// })->middleware(['auth', 'verified'])->name('dashboard');
+
+
 Route::get('/dashboard', function () {
-    return Inertia::render('Dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+    return Inertia::render('Dashboard', [
+        'auth' => [
+            'user' => [
+                'id' => auth()->user()->id,
+                'name' => auth()->user()->name,
+                'role' => auth()->user()->role->name, // Role Name
+                'role_id' => auth()->user()->role_id, // Role ID
+                'permissions' => auth()->user()->role->permissions->pluck('name')->toArray(), // Assigned Permissions
+            ]
+        ]
+    ]);
+})->name('dashboard');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
