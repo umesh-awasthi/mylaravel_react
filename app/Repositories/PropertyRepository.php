@@ -6,57 +6,51 @@ use App\Models\Property;
 
 class PropertyRepository
 {
-    /**
-     * Get all properties.
-     */
-    public function all()
+    
+    public function getAllProperties()
     {
-        return Property::all(); // Fetch all properties
+        return Property::select('id', 'name', 'description', 'price', 'image', 'category_id')->get();
     }
 
     /**
-     * Get properties that the admin can manage.
+     * Get properties filtered by category (Buy, Rent, Sold).
      */
-    public function getManageableProperties($admin)
+    public function getPropertiesByCategory($category)
     {
-        return Property::all()->filter(function ($property) use ($admin) {
-            return $admin->canManageProperty($property);
-        });
+        return Property::where('category_id', strtolower($category))
+            ->select('id', 'name', 'description', 'price', 'image', 'category_id')
+            ->get();
     }
 
     /**
      * Create a new property.
      */
-    public function create(array $data)
+    public function createProperty(array $data)
     {
+        // Handle the image upload if it exists
+        if (isset($data['image']) && $data['image'] instanceof \Illuminate\Http\UploadedFile) {
+            $data['image'] = $data['image']->store('images', 'public'); // Store image in the public disk
+        }
+
         return Property::create($data);
     }
 
     /**
      * Find a property by ID.
      */
-    public function find($id)
+    public function getPropertyById($id)
     {
         return Property::findOrFail($id);
     }
-
+   
     /**
      * Update a property.
      */
-    public function update($id, array $data)
+    public function updateProperty($id, array $data)
     {
-        $property = $this->find($id);
+        $property = $this->getPropertyById($id);
         $property->update($data);
         return $property;
-    }
-
-    /**
-     * Delete a property.
-     */
-    public function delete($id)
-    {
-        $property = $this->find($id);
-        $property->delete();
-        return $property;
+        
     }
 }

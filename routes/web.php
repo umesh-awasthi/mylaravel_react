@@ -10,14 +10,19 @@ use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\PermissionController;
 use App\Http\Controllers\PropertyController;
 
+
+use App\Repositories\PropertyRepository;
+
 Route::get('/', function () {
+    $propertyRepository = app(PropertyRepository::class); // Resolve the repository
+    $properties = $propertyRepository->getAllProperties(); // Fetch properties using the repository
+
     return Inertia::render('Welcome', [
         'canLogin' => Route::has('login'),
         'canRegister' => Route::has('register'),
-        'laravelVersion' => Application::VERSION,
-        'phpVersion' => PHP_VERSION,
+        'properties' => $properties,
     ]);
-});
+})->name('properties.index');
 
 
 
@@ -30,10 +35,8 @@ Route::middleware('auth')->group(function () {
 });
 
 
+Route::resource('properties', PropertyController::class);
 
-Route::middleware('auth')->group(function () {
-    Route::resource('properties', PropertyController::class);
-});
 
 Route::prefix('admin')->group(function () {
     // Authentication

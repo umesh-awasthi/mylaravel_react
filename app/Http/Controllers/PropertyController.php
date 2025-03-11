@@ -2,93 +2,183 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\PropertyRequest; // Assuming you will create a request for validation
-use App\Repositories\AdminRepository; // Add this import at the top
+use App\Http\Requests\PropertyRequest;
+use App\Repositories\AdminRepository;
 use App\Repositories\PropertyRepository;
 use App\Repositories\RoleRepository;
 use Illuminate\Http\Request;
+use App\Models\Category;
 use Inertia\Inertia;
 
 class PropertyController extends Controller
 {
     protected $propertyRepository;
     protected $roleRepository;
+    protected $adminRepository;
 
-    protected $adminRepository; // Add this line
-
-    public function __construct(PropertyRepository $propertyRepository, AdminRepository $adminRepository
-    ,RoleRepository $roleRepository) // Modify the constructor
-    {
+    public function __construct(
+        PropertyRepository $propertyRepository, 
+        AdminRepository $adminRepository,
+        RoleRepository $roleRepository
+    ) {
         $this->roleRepository = $roleRepository;
         $this->propertyRepository = $propertyRepository;
-        $this->adminRepository = $adminRepository; // Initialize the adminRepository
+        $this->adminRepository = $adminRepository;
     }
 
     /**
-     * Display a listing of properties.
+     * Display a listing of properties with filtering.
      */
-    public function index()
-    {
-        $properties = $this->propertyRepository->all(); // Fetch all properties
-        // Add permission check to filter properties based on admin's permissions
-        $properties = $properties->filter(function ($property) {
-            return $this->adminRepository->canManageProperty($property);
-        });
+    // public function index(Request $request)
+    // {
+    //     // Map category names to IDs (Adjust this based on your database)
+    //     $categoryMap = [
+    //         'rent' => 1,
+    //         'buy' => 2,
+           
+    //         'sold' => 3,
+    //     ];
+    
+    //     $category = $request->query('category'); // "buy", "rent", "sold"
+    //     $categoryId = $categoryMap[$category] ?? null; // Convert category to category_id
+    
+    //     // Fetch properties based on category_id or fetch all if not provided
+    //     $properties = $categoryId 
+    //         ? $this->propertyRepository->getPropertiesByCategory($categoryId)
+    //         : $this->propertyRepository->getAllProperties();
+    
+    //     // Ensure data is properly formatted for Inertia
+    //     $properties = $properties->map(function ($property) {
+    //         return [
+    //             'id' => $property->id,
+    //             'name' => $property->name,
+    //             'description' => $property->description,
+    //             'price' => $property->price,
+    //             'image' => $property->image,
+    //             'category_id' => $property->category_id,
+    //         ];
+    //     });
+    
+    //     // Fetch role permissions if authenticated
+    //     $rolePermissions = [];
+    //     if (auth()->check()) {
+    //         $user = auth()->user();
+    //         $role = $this->roleRepository->findRoleById($user->role_id);
+    //         $rolePermissions = $this->roleRepository->getRolePermissions($role);
+    //     }
+    
+    //     \Log::info('Properties fetched:', $properties->toArray()); // Logs to storage/logs/laravel.log
+    
+    //     return Inertia::render('Properties/Index', [
+    //         'properties' => $properties ?? [],
+    //         'rolePermissions' => $rolePermissions,
+    //         'selectedCategory' => $category, // Send selected category to frontend
+    //     ]);
+    // }
 
-        // Get the current user's role and permissions
+
+    public function index(Request $request)
+{
+    // Fetch all categories from the database
+    $categories = Category::select('id', 'name')->get();
+
+    // Get category from request (e.g., "buy", "rent", "sold")
+    $category = $request->query('category'); 
+
+    // Find category ID dynamically from the database
+    $categoryId = $categories->where('name', $category)->pluck('id')->first();
+
+    // Fetch properties based on category_id, or fetch all if not provided
+    $properties = $categoryId 
+        ? $this->propertyRepository->getPropertiesByCategory($categoryId)
+        : $this->propertyRepository->getAllProperties();
+
+    // Format properties for Inertia
+    $properties = $properties->map(function ($property) {
+        return [
+            'id' => $property->id,
+            'name' => $property->name,
+            'description' => $property->description,
+            'price' => $property->price,
+            'image' => $property->image,
+            'category_id' => $property->category_id,
+            'category_name' => $property->category->name ?? null, // Ensure category name is included
+        ];
+    });
+
+    // Fetch role permissions if authenticated
+    $rolePermissions = [];
+    if (auth()->check()) {
         $user = auth()->user();
-      
         $role = $this->roleRepository->findRoleById($user->role_id);
         $rolePermissions = $this->roleRepository->getRolePermissions($role);
-        \Log::info('User:', ['user' => $user, 'roles' => $user->role_id, 'permissions' => $rolePermissions]);
-        // dd($rolePermissions);
-        return Inertia::render('Properties/Index', [
-            'properties' => $properties,
-            'rolePermissions' => $rolePermissions // Pass permissions to the view
-        ]);
     }
+
+    \Log::info('Properties fetched:', $properties->toArray()); // Logs to storage/logs/laravel.log
+
+    return Inertia::render('Properties/Index', [
+        'properties' => $properties ?? [],
+        'rolePermissions' => $rolePermissions,
+        'selectedCategory' => $category, // Send selected category to frontend
+        'categories' => $categories, // Send all categories to frontend
+    ]);
+}
+
+    
 
     /**
      * Show the form for creating a new property.
      */
     public function create()
     {
-        return Inertia::render('Properties/Create');
+        $categories = Category::select('id', 'name')->get(); // Fetch categories
+        return Inertia::render('Properties/Create', [
+            'categories' => $categories, // Pass categories to the component
+        ]); // Add the missing closing bracket here
     }
 
     /**
-     * Store a newly created property in storage.
+     * Store a newly created property.
      */
     public function store(PropertyRequest $request)
     {
-        $this->propertyRepository->create($request->validated());
+        $data = $request->validated();
+        
+        // Handle image upload
+        if ($request->hasFile('image')) {
+            $data['image'] = $request->file('image')->store('images', 'public'); // Store image in the public disk
+        }
+
+        $this->propertyRepository->createProperty($data);
         return redirect()->route('properties.index')->with('success', 'Property created successfully.');
     }
 
     /**
-     * Show the form for editing the specified property.
+     * Show the form for editing a property.
      */
     public function edit($id)
     {
-        $property = $this->propertyRepository->find($id);
-        return Inertia::render('Properties/Edit', compact('property'));
+        $property = $this->propertyRepository->getPropertyById($id);
+        $categories = Category::all(); // Fetch all categories
+    
+        return Inertia::render('Properties/Edit', compact('property', 'categories'));
     }
-
+    
     /**
-     * Update the specified property in storage.
+     * Update an existing property.
      */
     public function update(PropertyRequest $request, $id)
     {
-        $this->propertyRepository->update($id, $request->validated());
+        $this->propertyRepository->updateProperty($id, $request->validated());
         return redirect()->route('properties.index')->with('success', 'Property updated successfully.');
     }
 
     /**
-     * Remove the specified property from storage.
+     * Delete a property.
      */
     public function destroy($id)
     {
-        $this->propertyRepository->delete($id);
+        $this->propertyRepository->deleteProperty($id);
         return redirect()->route('properties.index')->with('success', 'Property deleted successfully.');
     }
 }

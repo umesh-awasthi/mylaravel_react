@@ -10,6 +10,15 @@ class Property extends Model
         'name',
         'description',
         'price',
-    
+        'image',       // Added column for property image
+        'category_id', // Added column for category ID
     ];
+
+    /**
+     * Relationship: Each property belongs to a category.
+     */
+    public function category()
+    {
+        return $this->belongsTo(Category::class);
+    }
 }

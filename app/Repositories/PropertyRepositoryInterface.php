@@ -9,4 +9,5 @@ interface PropertyRepositoryInterface
     public function updateProperty($id, array $data);
     public function deleteProperty($id);
     public function getAllProperties();
+    public function getPropertiesByCategory($category); // New method for filtering Buy, Rent, Sold
 }
