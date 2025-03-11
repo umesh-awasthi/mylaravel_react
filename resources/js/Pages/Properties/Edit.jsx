@@ -1,18 +1,37 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Inertia } from '@inertiajs/inertia';
 import { useForm } from '@inertiajs/inertia-react';
 
-const Edit = ({ property }) => {
+const Edit = ({ property, categories }) => {
     const { data, setData, put, processing, errors } = useForm({
         name: property.name,
         description: property.description,
         price: property.price,
+        image: null,
+        category_id: property.category_id || '', // Single category selection
     });
-
     const handleSubmit = (e) => {
         e.preventDefault();
-        put(`/properties/${property.id}`);
+        
+        const formData = new FormData();
+        formData.append('name', data.name);
+        formData.append('description', data.description);
+        formData.append('price', data.price);
+        formData.append('category_id', data.category_id);
+    
+        // Check if a new image is uploaded
+        if (data.image) {
+            formData.append('image', data.image);
+        }
+    
+        // Laravel requires `_method` for PUT requests with FormData
+        formData.append('_method', 'PUT');
+    
+        Inertia.post(`/properties/${property.id}`, formData, {
+            forceFormData: true,
+        });
     };
+    
 
     return (
         <div>
@@ -48,6 +67,34 @@ const Edit = ({ property }) => {
                         required
                     />
                     {errors.price && <div>{errors.price}</div>}
+                </div>
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
+                    <div className="space-y-2">
+                        {categories.map(category => (
+                            <div key={category.id} className="flex items-center">
+                                <input
+                                    type="radio"
+                                    id={`category-${category.id}`}
+                                    value={category.id}
+                                    checked={data.category_id === category.id}
+                                    onChange={() => setData('category_id', category.id)}
+                                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                />
+                                <label htmlFor={`category-${category.id}`} className="ml-2 text-sm text-gray-700">
+                                    {category.name}
+                                </label>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+                <div>
+                    <label className="block text-sm font-medium text-gray-700">Image</label>
+                    <input
+                        type="file"
+                        onChange={e => setData('image', e.target.files[0])}
+                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm focus:ring focus:ring-blue-500 focus:border-blue-500"
+                    />
                 </div>
                 <button type="submit" disabled={processing} className="mt-4 bg-blue-600 text-white font-bold py-2 px-4 rounded hover:bg-blue-700">
                     Update Property

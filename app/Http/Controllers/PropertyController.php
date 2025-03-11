@@ -26,56 +26,7 @@ class PropertyController extends Controller
         $this->adminRepository = $adminRepository;
     }
 
-    /**
-     * Display a listing of properties with filtering.
-     */
-    // public function index(Request $request)
-    // {
-    //     // Map category names to IDs (Adjust this based on your database)
-    //     $categoryMap = [
-    //         'rent' => 1,
-    //         'buy' => 2,
-           
-    //         'sold' => 3,
-    //     ];
     
-    //     $category = $request->query('category'); // "buy", "rent", "sold"
-    //     $categoryId = $categoryMap[$category] ?? null; // Convert category to category_id
-    
-    //     // Fetch properties based on category_id or fetch all if not provided
-    //     $properties = $categoryId 
-    //         ? $this->propertyRepository->getPropertiesByCategory($categoryId)
-    //         : $this->propertyRepository->getAllProperties();
-    
-    //     // Ensure data is properly formatted for Inertia
-    //     $properties = $properties->map(function ($property) {
-    //         return [
-    //             'id' => $property->id,
-    //             'name' => $property->name,
-    //             'description' => $property->description,
-    //             'price' => $property->price,
-    //             'image' => $property->image,
-    //             'category_id' => $property->category_id,
-    //         ];
-    //     });
-    
-    //     // Fetch role permissions if authenticated
-    //     $rolePermissions = [];
-    //     if (auth()->check()) {
-    //         $user = auth()->user();
-    //         $role = $this->roleRepository->findRoleById($user->role_id);
-    //         $rolePermissions = $this->roleRepository->getRolePermissions($role);
-    //     }
-    
-    //     \Log::info('Properties fetched:', $properties->toArray()); // Logs to storage/logs/laravel.log
-    
-    //     return Inertia::render('Properties/Index', [
-    //         'properties' => $properties ?? [],
-    //         'rolePermissions' => $rolePermissions,
-    //         'selectedCategory' => $category, // Send selected category to frontend
-    //     ]);
-    // }
-
 
     public function index(Request $request)
 {
@@ -167,11 +118,29 @@ class PropertyController extends Controller
     /**
      * Update an existing property.
      */
+    // public function update(PropertyRequest $request, $id)
+    // {
+    //     $this->propertyRepository->updateProperty($id, $request->validated());
+    //     return redirect()->route('properties.index')->with('success', 'Property updated successfully.');
+    // }
+
     public function update(PropertyRequest $request, $id)
-    {
-        $this->propertyRepository->updateProperty($id, $request->validated());
-        return redirect()->route('properties.index')->with('success', 'Property updated successfully.');
+{
+    $property = $this->propertyRepository->getPropertyById($id);
+    $data = $request->validated();
+
+    // Handle image update
+    if ($request->hasFile('image')) {
+        $data['image'] = $request->file('image')->store('images', 'public');
+    } else {
+        $data['image'] = $property->image; // Keep existing image if not updated
     }
+
+    $this->propertyRepository->updateProperty($id, $data);
+
+    return redirect()->route('properties.index')->with('success', 'Property updated successfully.');
+}
+
 
     /**
      * Delete a property.
