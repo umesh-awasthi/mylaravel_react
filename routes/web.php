@@ -22,7 +22,7 @@ Route::get('/', function () {
         'canRegister' => Route::has('register'),
         'properties' => $properties,
     ]);
-})->name('properties.index');
+});
 
 
 
