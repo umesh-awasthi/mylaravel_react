@@ -150,4 +150,18 @@ class PropertyController extends Controller
         $this->propertyRepository->deleteProperty($id);
         return redirect()->route('properties.index')->with('success', 'Property deleted successfully.');
     }
+
+    public function show($id)
+{
+    $property = $this->propertyRepository->getPropertyById($id);
+
+    return Inertia::render('Properties/Show', [
+        'property' => $property,
+    ]);
+}
+
+// public function getAllPropertiess()
+// {
+//     return $this->propertyRepository->getAllPropertiess()->paginate(3); // Return query builder instead of collection
+// }
 }

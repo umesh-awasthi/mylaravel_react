@@ -6,7 +6,10 @@ use App\Models\Property;
 
 class PropertyRepository
 {
-    
+    public function getAllPropertiess()
+{
+    return Property::query(); // Return query builder instead of collection
+}
     public function getAllProperties()
     {
         return Property::select('id', 'name', 'description', 'price', 'image', 'category_id')->get();
@@ -52,5 +55,10 @@ class PropertyRepository
         $property->update($data);
         return $property;
         
+    }
+
+    public function deleteProperty($id){
+        $property = $this->getPropertyById($id);
+    
     }
 }

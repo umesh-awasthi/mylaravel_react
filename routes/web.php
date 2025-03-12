@@ -15,8 +15,9 @@ use App\Repositories\PropertyRepository;
 
 Route::get('/', function () {
     $propertyRepository = app(PropertyRepository::class); // Resolve the repository
-    $properties = $propertyRepository->getAllProperties(); // Fetch properties using the repository
-
+    // $properties = $propertyRepository->getAllPropertiess()->paginate(3); // Fetch properties using the repository
+  
+    $properties = $propertyRepository->getAllProperties();
     return Inertia::render('Welcome', [
         'canLogin' => Route::has('login'),
         'canRegister' => Route::has('register'),
