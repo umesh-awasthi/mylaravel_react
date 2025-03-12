@@ -6,15 +6,16 @@ use App\Models\Property;
 
 class PropertyRepository
 {
-    public function getAllPropertiess()
-{
-    return Property::query(); // Return query builder instead of collection
-}
-    public function getAllProperties()
-    {
-        return Property::select('id', 'name', 'description', 'price', 'image', 'category_id')->get();
-    }
 
+public function getAllProperties()
+{
+    $query = Property::select('id', 'name', 'description', 'price', 'image', 'category_id');
+
+    return [
+        'query' => $query, // Query builder (for pagination)
+       // 'all' => $query->get() // Collection (all properties)
+    ];
+}
     /**
      * Get properties filtered by category (Buy, Rent, Sold).
      */

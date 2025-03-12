@@ -13,15 +13,29 @@ use App\Http\Controllers\PropertyController;
 
 use App\Repositories\PropertyRepository;
 
+// Route::get('/', function () {
+//     $propertyRepository = app(PropertyRepository::class); // Resolve the repository
+//    // $properties = $propertyRepository->getAllProperties()->paginate(3); // Fetch properties using the repository
+  
+//     $properties = $propertyRepository->getAllProperties(true)->paginate(3);
+//     //$properties = $propertyRepository->getAllProperties();
+//     return Inertia::render('Welcome', [
+//         'canLogin' => Route::has('login'),
+//         'canRegister' => Route::has('register'),
+//         'properties' => $properties,
+//     ]);
+// });
 Route::get('/', function () {
     $propertyRepository = app(PropertyRepository::class); // Resolve the repository
-    // $properties = $propertyRepository->getAllPropertiess()->paginate(3); // Fetch properties using the repository
-  
-    $properties = $propertyRepository->getAllProperties();
+    
+    // Get properties with pagination
+    $propertiesData = $propertyRepository->getAllProperties();
+
     return Inertia::render('Welcome', [
         'canLogin' => Route::has('login'),
         'canRegister' => Route::has('register'),
-        'properties' => $properties,
+        'properties' => $propertiesData['query']->paginate(3), // Paginated properties
+        //'allProperties' => $propertiesData['all'], // All properties collection
     ]);
 });
 
